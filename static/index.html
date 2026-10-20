@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Верстак ПК</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Unbounded:wght@500;700&display=swap">
+<link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="brand">
+      <h1>Верстак<i>.</i></h1>
+      <p>Собери ПК и покрути его в 3D</p>
+    </div>
+    <div class="presets" id="presets">
+      <span class="eyebrow">Готовые сборки</span>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="stage" id="stage" aria-label="3D-модель сборки">
+      <canvas id="scene" tabindex="0" aria-label="3D-модель. Тяни, чтобы вращать, колесо мыши для приближения, клик по детали открывает её в списке"></canvas>
+      <div class="stage-msg" id="stageMsg">Загружаю 3D…</div>
+      <div class="pins" id="pins" aria-hidden="true"></div>
+      <div class="stage-top">
+        <div class="plate" id="plate"><b>—</b><span>—</span></div>
+        <div class="hint" id="hint">тяни — вращать<br>колесо — приблизить<br>клик по детали — выбрать</div>
+      </div>
+      <aside class="legend" id="legend" hidden aria-label="Что есть что">
+        <div class="legend-head">
+          <div><span class="eyebrow" id="legendCat">Осмотр</span><b id="legendTitle">—</b></div>
+          <button class="legend-x" id="legendClose" aria-label="Выйти из осмотра">×</button>
+        </div>
+        <ol class="legend-list" id="legendList"></ol>
+      </aside>
+      <div class="tip" id="tip" hidden></div>
+      <div class="stage-bottom">
+        <div class="tools">
+          <button class="tool" id="tGlass" aria-pressed="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="2.5" y="1.5" width="11" height="13" rx="1.5"/><path d="M5 4.5l3-1M5 7.5l6-2"/></svg><span>Стекло</span></button>
+          <button class="tool" id="tExplode" aria-pressed="false"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="5.5" y="5.5" width="5" height="5" rx="1"/><path d="M2 2l2.5 2.5M14 2l-2.5 2.5M2 14l2.5-2.5M14 14l-2.5-2.5"/></svg><span>Разобрать</span></button>
+          <button class="tool" id="tLabels" aria-pressed="false"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M2 3.5h7l5 4.5-5 4.5H2z"/><circle cx="5" cy="8" r="1"/></svg><span>Подписи</span></button>
+          <button class="tool" id="tInspect" aria-pressed="false"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg><span>Осмотр</span></button>
+          <button class="tool" id="tSpin" aria-pressed="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9"/><path d="M12.5 1.5v3h-3"/></svg><span>Вращение</span></button>
+          <button class="tool" id="tView"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M1.5 8s2.5-4.5 6.5-4.5S14.5 8 14.5 8s-2.5 4.5-6.5 4.5S1.5 8 1.5 8z"/><circle cx="8" cy="8" r="2"/></svg><span>Общий вид</span></button>
+        </div>
+        <div class="rgb" id="rgb" role="group" aria-label="Подсветка">
+          <span class="eyebrow">RGB</span>
+        </div>
+      </div>
+    </section>
+
+    <aside class="panel" id="panel" aria-label="Сборка">
+      <div class="summary">
+        <div class="total-row">
+          <div>
+            <div class="eyebrow">Итого за сборку</div>
+            <div class="total" id="total">0 ₽</div>
+          </div>
+          <span class="pill" id="status" data-level="ok">Всё совместимо</span>
+        </div>
+        <dl class="metrics">
+          <dt>Питание</dt>
+          <dd><span class="num" id="powerTxt">—</span><div class="bar" aria-hidden="true"><i id="powerBar"></i></div></dd>
+          <dt>В играх</dt>
+          <dd id="tierTxt">—</dd>
+          <dt>Начинка</dt>
+          <dd class="num" id="specTxt">—</dd>
+          <dt>Цены</dt>
+          <dd id="priceTxt">—</dd>
+        </dl>
+      </div>
+      <ul class="issues" id="issues" aria-live="polite"></ul>
+      <div class="cats" id="cats"></div>
+      <div class="actions">
+        <button class="btn" id="share" hidden>Поделиться сборкой</button>
+        <button class="btn" id="copy">Скопировать список</button>
+        <button class="btn ghost" id="reset">Начать заново</button>
+      </div>
+      <textarea class="copybox" id="copybox" readonly hidden aria-label="Список деталей"></textarea>
+      <p class="note" id="note">Совместимость проверяется по сокету, типу памяти, форм-фактору, длине видеокарты, высоте кулера, радиатору СЖО и мощности блока питания.</p>
+    </aside>
+  </main>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script src="/vendor/three.min.js"></script>
+<script src="/vendor/OrbitControls.js"></script>
+<script src="/vendor/RoundedBoxGeometry.js"></script>
+<script src="/js/rules.js"></script>
+<script src="/js/engine3d.js"></script>
+<script src="/js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Верстак: цены</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Unbounded:wght@500;700&display=swap">
+<link rel="stylesheet" href="/css/app.css">
+<style>
+html,body{height:auto}
+body{padding:16px}
+.wrap{max-width:1100px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{margin:0;font:700 19px/1 var(--font-display);letter-spacing:.06em;text-transform:uppercase}
+h1 i{font-style:normal;color:var(--accent)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px}
+.card h2{margin:0 0 10px;font:500 14px/1.3 var(--font-display)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+input[type=text],input[type=password],input[type=number],textarea{font:400 13.5px/1.3 var(--font-body);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:9px 10px;min-width:0}
+input:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:1px}
+textarea{width:100%;min-height:120px;font-family:var(--font-mono);font-size:12.5px}
+.grow{flex:1 1 220px}
+.btn{padding:9px 13px;font-size:13.5px}
+.btn[disabled]{opacity:.5;cursor:default}
+.muted{color:var(--muted);font-size:12.5px;line-height:1.5}
+.mono{font-family:var(--font-mono);font-size:12px}
+.kv{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 12px;font-size:13px}
+.kv dt{color:var(--muted)} .kv dd{margin:0;overflow-wrap:anywhere}
+.cat-title{margin:18px 0 6px;font:500 11px/1.2 var(--font-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.part{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:8px}
+.part-head{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:baseline}
+.part-head b{font-size:14.5px;font-weight:600}
+.price{font:500 13px/1.2 var(--font-mono);font-variant-numeric:tabular-nums}
+.badge{display:inline-block;margin-left:6px;padding:2px 7px;border-radius:5px;font:500 10.5px/1.5 var(--font-mono);text-transform:uppercase;letter-spacing:.06em}
+.badge.live{color:var(--ok);background:color-mix(in srgb,var(--ok) 13%,transparent)}
+.badge.ref{color:var(--muted);background:var(--surface-2)}
+.src{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;margin-top:8px;padding:8px 10px;border-radius:9px;background:var(--surface-2);font-size:12.5px}
+.src a{color:var(--ink);overflow-wrap:anywhere}
+.chip-s{display:inline-block;padding:1px 7px;border-radius:5px;font:500 11px/1.6 var(--font-mono);background:var(--surface);border:1px solid var(--line)}
+.chip-s[data-k="ok"]{color:var(--ok);border-color:color-mix(in srgb,var(--ok) 40%,var(--line))}
+.chip-s[data-k="warn"]{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 40%,var(--line))}
+.chip-s[data-k="bad"]{color:var(--bad);border-color:color-mix(in srgb,var(--bad) 40%,var(--line))}
+.src .err{grid-column:1/-1;color:var(--bad)}
+.x{appearance:none;border:1px solid var(--line);background:var(--surface);border-radius:7px;width:26px;height:26px;cursor:pointer;color:var(--muted)}
+.x:hover{color:var(--bad);border-color:var(--bad)}
+.add{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.add input[type=text]{flex:1 1 200px} .add input[type=number]{width:110px} .add .store{width:130px;flex:0 0 auto}
+.small{padding:7px 10px;font-size:12.5px}
+.bar-msg{padding:10px 12px;border-radius:10px;background:var(--surface-2);font-size:13px}
+.bar-msg[data-level="error"]{color:var(--bad)}
+details summary{cursor:pointer;font-weight:500;font-size:13.5px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="row" style="justify-content:space-between">
+    <h1>Верстак<i>.</i> цены</h1>
+    <a class="btn ghost" href="/" style="text-decoration:none;display:inline-block">К конфигуратору</a>
+  </div>
+
+  <div class="card" id="login">
+    <h2>Вход</h2>
+    <form class="row" id="loginForm">
+      <input type="password" id="token" class="grow" placeholder="Токен администратора" autocomplete="current-password" aria-label="Токен администратора">
+      <button class="btn" type="submit">Войти</button>
+    </form>
+    <p class="muted">Токен берётся из переменной VERSTAK_ADMIN_TOKEN. Если её нет, сервер создал его сам и положил в файл data/admin_token.txt.</p>
+    <div class="bar-msg" id="loginMsg" hidden data-level="error"></div>
+  </div>
+
+  <div id="main" hidden>
+    <div class="card">
+      <h2>Обновление цен</h2>
+      <dl class="kv" id="info"></dl>
+      <div class="row" style="margin-top:12px">
+        <button class="btn" id="refreshAll">Обновить все цены сейчас</button>
+        <span class="muted" id="refreshMsg"></span>
+      </div>
+      <p class="muted" style="margin:10px 0 0">Сборщик ходит только на страницы товаров по ссылкам, которые ты добавил. Он читает robots.txt, делает паузу между запросами к одному магазину и сразу останавливается, если магазин отвечает отказом или показывает проверку на робота. Обходить защиту он не умеет и не будет. Перед добавлением магазина проверь его условия использования сайта.</p>
+    </div>
+
+    <div class="card">
+      <h2>Массовая загрузка цен (CSV)</h2>
+      <p class="muted" style="margin-top:0">Подходит, если цены тебе присылает магазин, партнёрская программа или ты выгружаешь их сам. Колонки: part_id, price, store, url, in_stock. Строки без цены пропускаются.</p>
+      <div class="row" style="margin-bottom:8px">
+        <button class="btn ghost small" id="tpl">Скачать шаблон</button>
+        <label class="btn ghost small" style="cursor:pointer">Выбрать файл<input type="file" id="csvFile" accept=".csv,.txt,text/csv,text/plain" hidden></label>
+      </div>
+      <textarea id="csv" placeholder="part_id;price;store;url;in_stock&#10;r5-7500f;12490;Магазин;https://…;1" aria-label="Содержимое CSV"></textarea>
+      <div class="row" style="margin-top:8px"><button class="btn" id="csvGo">Загрузить</button><span class="muted" id="csvMsg"></span></div>
+    </div>
+
+    <div id="parts"></div>
+  </div>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+(() => {
+'use strict';
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const rub = n => Number(n).toLocaleString('ru-RU') + ' ₽';
+const fmt = iso => { if (!iso) return '—'; try { return new Date(iso).toLocaleString('ru-RU', {day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'}); } catch (e) { return iso; } };
+let token = ''; try { token = sessionStorage.getItem('verstak-admin') || ''; } catch (e) {}
+let toastT = 0;
+const toast = m => { const t = $('#toast'); t.textContent = m; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2600); };
+
+const STATUS = {
+  new: ['ещё не проверялось', ''], ok: ['цена найдена', 'ok'], out_of_stock: ['нет в наличии', 'warn'],
+  robots: ['запрещено robots.txt', 'bad'], blocked: ['магазин не пускает, пауза', 'bad'], no_price: ['цена не найдена', 'warn'],
+  suspicious: ['подозрительная цена', 'bad'], error: ['ошибка', 'bad'], badurl: ['ссылка не подходит', 'bad'], manual: ['вручную', 'ok'],
+};
+
+async function api(path, opts = {}) {
+  const r = await fetch(path, {...opts, headers: {'content-type': 'application/json', 'x-admin-token': token, ...(opts.headers || {})}});
+  if (r.status === 401) { showLogin('Токен не подошёл'); throw new Error('401'); }
+  const ct = r.headers.get('content-type') || '';
+  const body = ct.includes('json') ? await r.json() : await r.text();
+  if (!r.ok) throw new Error(typeof body === 'object' && body.detail ? (typeof body.detail === 'string' ? body.detail : 'Неверные данные') : 'Ошибка ' + r.status);
+  return body;
+}
+function showLogin(msg) {
+  $('#main').hidden = true; $('#login').hidden = false;
+  const m = $('#loginMsg'); m.hidden = !msg; m.textContent = msg || '';
+}
+
+let data = null, pollT = 0, openDetails = new Set();
+async function load() {
+  data = await api('/api/admin/overview');
+  $('#login').hidden = true; $('#main').hidden = false;
+  draw();
+  clearTimeout(pollT);
+  if (data.updater.running) pollT = setTimeout(() => load().catch(() => {}), 3000);
+}
+
+function draw() {
+  const u = data.updater, s = u.last_summary;
+  $('#info').innerHTML = `
+    <dt>Состояние</dt><dd>${u.running ? 'идёт обновление…' : 'ждёт'}</dd>
+    <dt>Последний запуск</dt><dd>${fmt(u.last_run)}${s ? ' · ' + esc(Object.entries(s).map(([k, v]) => `${STATUS[k] ? STATUS[k][0] : k}: ${v}`).join(', ')) : ''}</dd>
+    <dt>Пауза между запросами</dt><dd>${data.min_delay} с на один магазин</dd>
+    <dt>Представление сборщика</dt><dd class="mono">${esc(data.user_agent)}</dd>`;
+  $('#refreshAll').disabled = u.running;
+
+  const keep = new Set([...document.querySelectorAll('details[open]')].map(d => d.dataset.id));
+  for (const id of openDetails) keep.add(id);
+  openDetails.clear();
+  let html = '', last = '';
+  for (const p of data.parts) {
+    if (p.cat !== last) { html += `<div class="cat-title">${esc(p.cat_name)}</div>`; last = p.cat; }
+    const srcs = p.sources.map(s => {
+      const st = s.kind === 'web' ? (STATUS[s.status] || [s.status, '']) : [s.kind === 'csv' ? 'CSV' : 'вручную', 'ok'];
+      const link = s.url ? `<a href="${esc(s.url)}" target="_blank" rel="noopener noreferrer">${esc(s.store)}: ${esc(s.url)}</a>` : esc(s.store);
+      return `<div class="src"><div>${link}</div><button class="x" data-del="${s.id}" title="Удалить источник" aria-label="Удалить источник">×</button>
+        <div><span class="chip-s" data-k="${st[1]}">${esc(st[0])}</span>
+        ${s.price != null ? ` <span class="price">${rub(s.price)}</span>${s.in_stock ? '' : ' (нет в наличии)'}` : ''}
+        <span class="muted"> · ${fmt(s.fetched_at || s.last_checked)}</span></div>
+        <div></div>
+        ${s.last_error ? `<div class="err">${esc(s.last_error)}</div>` : ''}
+        ${s.blocked_until ? `<div class="muted" style="grid-column:1/-1">Пауза до ${fmt(s.blocked_until)}</div>` : ''}</div>`;
+    }).join('');
+    html += `<div class="part"><div class="part-head"><b>${esc(p.name)}</b>
+      <span class="price">${rub(p.price)}<span class="badge ${p.price_kind}">${p.price_kind === 'live' ? esc(p.price_store || 'магазин') : 'ориентир ' + rub(p.ref_price)}</span></span></div>
+      ${srcs}
+      <details data-id="${esc(p.id)}"${keep.has(p.id) ? ' open' : ''} style="margin-top:8px"><summary>Добавить источник цены</summary>
+        <form class="add" data-url-for="${esc(p.id)}"><input type="text" name="url" placeholder="https://… ссылка на страницу товара" aria-label="Ссылка на товар" required>
+          <input type="text" class="store" name="store" placeholder="Магазин (необязательно)" aria-label="Название магазина">
+          <button class="btn small" type="submit">Добавить ссылку</button></form>
+        <form class="add" data-manual-for="${esc(p.id)}"><input type="number" name="price" min="1" step="1" placeholder="Цена, ₽" aria-label="Цена" required>
+          <input type="text" class="store" name="store" placeholder="Магазин" aria-label="Магазин">
+          <label class="muted"><input type="checkbox" name="stock" checked> в наличии</label>
+          <button class="btn ghost small" type="submit">Записать цену</button>
+          <button class="btn ghost small" type="button" data-refresh="${esc(p.id)}">Проверить сейчас</button></form>
+      </details></div>`;
+  }
+  $('#parts').innerHTML = html;
+}
+
+$('#loginForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  token = $('#token').value.trim();
+  try { await load(); try { sessionStorage.setItem('verstak-admin', token); } catch (e2) {} }
+  catch (err) { if (err.message !== '401') showLogin('Не получилось подключиться: ' + err.message); }
+});
+
+$('#refreshAll').addEventListener('click', async () => {
+  try { await api('/api/admin/refresh', {method: 'POST', body: JSON.stringify({})}); toast('Обновление запущено'); await load(); }
+  catch (err) { toast(err.message); }
+});
+$('#parts').addEventListener('click', async e => {
+  const del = e.target.closest('[data-del]');
+  if (del) { try { await api('/api/admin/sources/' + del.dataset.del, {method: 'DELETE'}); await load(); toast('Источник удалён'); } catch (err) { toast(err.message); } return; }
+  const rf = e.target.closest('[data-refresh]');
+  if (rf) { try { await api('/api/admin/refresh', {method: 'POST', body: JSON.stringify({part_id: rf.dataset.refresh})}); toast('Проверяю…'); await load(); } catch (err) { toast(err.message); } }
+});
+$('#parts').addEventListener('submit', async e => {
+  e.preventDefault();
+  const f = e.target, fd = new FormData(f);
+  try {
+    if (f.dataset.urlFor) {
+      await api('/api/admin/sources', {method: 'POST', body: JSON.stringify({part_id: f.dataset.urlFor, url: fd.get('url').trim(), store: (fd.get('store') || '').trim() || null})});
+      toast('Ссылка добавлена. Цена появится после обновления');
+    } else if (f.dataset.manualFor) {
+      await api('/api/admin/manual-price', {method: 'POST', body: JSON.stringify({part_id: f.dataset.manualFor, price: Number(fd.get('price')), store: (fd.get('store') || '').trim() || 'Вручную', in_stock: fd.get('stock') === 'on'})});
+      toast('Цена записана');
+    }
+    openDetails.add(f.dataset.urlFor || f.dataset.manualFor);
+    await load();
+  } catch (err) { toast(err.message); }
+});
+
+$('#tpl').addEventListener('click', async () => {
+  try {
+    const text = await api('/api/admin/csv-template');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob(['﻿' + text], {type: 'text/csv;charset=utf-8'}));
+    a.download = 'verstak-prices.csv'; document.body.appendChild(a); a.click(); a.remove();
+  } catch (err) { toast(err.message); }
+});
+$('#csvFile').addEventListener('change', async e => {
+  const f = e.target.files[0]; if (!f) return;
+  if (f.size > 400000) { toast('Файл слишком большой'); return; }
+  const buf = await f.arrayBuffer();
+  let text = new TextDecoder('utf-8').decode(buf);
+  if (text.includes('�')) text = new TextDecoder('windows-1251').decode(buf);
+  $('#csv').value = text;
+});
+$('#csvGo').addEventListener('click', async () => {
+  const msg = $('#csvMsg');
+  try {
+    const r = await api('/api/admin/import-csv', {method: 'POST', body: JSON.stringify({csv: $('#csv').value})});
+    msg.textContent = `Загружено: ${r.imported}.` + (r.errors.length ? ` Ошибки: ${r.errors.slice(0, 5).join('; ')}${r.errors.length > 5 ? '…' : ''}` : '');
+    await load();
+  } catch (err) { msg.textContent = err.message; }
+});
+
+if (token) load().catch(() => showLogin(''));
+})();
+</script>
+</body>
+</html>
